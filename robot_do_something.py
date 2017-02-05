@@ -1,11 +1,3 @@
-
-
-# 1) Plug in power to the robot's barrell connector
-# 2) Plug the USB2Dynamixel (set to TTL) into the USB port of your computer
-# 3a) Plug the cable into the proximal servo; make sure only *one* servo is connected to the USB2Dynamixel
-# 3b) Plug in servo cable to USB2Dynamixel
-# 4) Initialize and try out the first servo as follows
-
 from lib_robotis_hack import *
 import sys, signal
 import numpy
@@ -29,7 +21,10 @@ print 'Argument List:', str(sys.argv)
 
 then = str(time.clock())
 with open(then+'.csv','w') as csvfile:
-    csvfile.write('#time,s0_command,s1_command,s0_angle,s1_angle,s0_load,s1_load,s0_temp,s1_temp,s0_voltage,s1_voltage,\n')
+    csvfile.write('#time,'
+       +'s0_command,'
+       +'s1_command,'
+       +'s0_angle,s1_angle,s0_load,s1_load,s0_temp,s1_temp,s0_voltage,s1_voltage,\n')
 
 
 # Create the USB to Serial channel
@@ -43,15 +38,31 @@ s_list = find_servos(D)
 s0 = Robotis_Servo(D,s_list[0])
 s1 = Robotis_Servo(D,s_list[1])
 
+def one_step_policy(t):
+    """This is where we tell our servos where to go...
+    
+    t is the current (likely integer) timestep
+    """
+    #s0.move_angle(-0.8*numpy.sin(0.2*self.t)-0.8)
+    #s1.move_angle(0.8*numpy.sin(0.2*self.t+.25)+0.8)
+    
+    if numpy.sin(t) > 0:
+        angle = -1
+    else:
+        angle = 1
+    
+    s0.move_angle(angle)
+    s1.move_angle(-angle)
 
+
+# http://stackoverflow.com/questions/34376656/matplotlib-create-real-time-animated-graph
 class RegrMagic(object):
     """Mock for function Regr_magic()
     """
     def __init__(self):
         self.t = 0
     def __call__(self):
-        s0.move_angle(1.5*numpy.sin(0.1*self.t))
-        s1.move_angle(numpy.sin(self.t))
+        one_step_policy(self.t)
         self.t += 1
 
         args = [s0.read_angle(), s1.read_angle(), \
@@ -60,7 +71,17 @@ class RegrMagic(object):
             s0.read_voltage(), s1.read_voltage()]
 
         with open(then + '.csv', 'a') as csvfile:
-            csvfile.write(str(self.t)+',move_angle('+str(1.5*numpy.sin(0.1*self.t))+'),move_angle('+str(numpy.sin(self.t))+'),'+str(args[0])+','+str(args[1])+','+str(args[2])+','+str(args[3])+','+str(args[4])+','+str(args[5])+','+str(args[6])+','+str(args[7])+',\n')
+            csvfile.write(str(self.t)
+                +',move_angle('+str(1.5*numpy.sin(0.1*self.t))+'),'
+                +'move_angle('+str(numpy.sin(self.t))+'),'
+                +str(args[0])+','
+                +str(args[1])+','
+                +str(args[2])+','
+                +str(args[3])+','
+                +str(args[4])+','
+                +str(args[5])+','
+                +str(args[6])+','
+                +str(args[7])+',\n')
 
         return self.t, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]
             
